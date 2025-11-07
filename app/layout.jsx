@@ -19,7 +19,7 @@ export default function RootLayout({ children }) {
     }
     
     if (!isLoading && user) {
-      router.push('/document-collection');
+      router.push('/admin/document-collection');
     }
   }, [user, isLoading, router, isVerifyPage]);
   

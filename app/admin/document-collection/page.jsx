@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import DocumentCollection from '../../components/DocumentCollection'; // this is your JSX file
+import DocumentCollection from '../../../components/DocumentCollection';
 
 export default function DocumentCollectionPage() {
   return (
