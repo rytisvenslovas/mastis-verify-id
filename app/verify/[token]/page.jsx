@@ -92,13 +92,13 @@ export default function VerifyPage() {
         formData.append('addressProofFile', addressProofFile);
       }
 
-    //   // Upload to Cloudinary AND save to Supabase in one API call
-    //   const res = await fetch('/api/upload-and-submit', {
-    //     method: 'POST',
-    //     body: formData,
-    //   });
+      // Upload to Cloudinary AND save to Supabase in one API call
+      const res = await fetch('/api/upload-and-submit', {
+        method: 'POST',
+        body: formData,
+      });
 
-    //   const result = await res.json();
+      const result = await res.json();
 
     //   if (!res.ok) {
     //     // Show detailed error info on phone
@@ -114,7 +114,7 @@ export default function VerifyPage() {
     //   }
 
       // Success!
-      alert('Documents submitted successfully! ✅');
+      alert('Documents submitted successfully! ✅', result);
       window.location.reload();
     } catch (error) {
       console.error('Submission error:', error);
