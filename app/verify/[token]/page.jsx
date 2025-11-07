@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { ID_TYPES, ID_TYPE_LABELS, ADDRESS_PROOF_TYPES, ADDRESS_PROOF_TYPE_LABELS } from '../../../lib/constants';
 
 export default function VerifyPage() {
   const params = useParams();
@@ -100,7 +101,16 @@ export default function VerifyPage() {
       const result = await res.json();
 
       if (!res.ok) {
-        throw new Error(result.error || 'Failed to submit documents');
+        // Show detailed error info on phone
+        const errorMsg = [
+          `❌ ${result.error}`,
+          ``,
+          `Step: ${result.step || 'unknown'}`,
+          result.details ? `Details: ${result.details}` : '',
+          result.insertData ? `Data sent: ${JSON.stringify(result.insertData, null, 2)}` : ''
+        ].filter(Boolean).join('\n');
+        
+        throw new Error(errorMsg);
       }
 
       // Success!
@@ -108,7 +118,8 @@ export default function VerifyPage() {
       window.location.reload();
     } catch (error) {
       console.error('Submission error:', error);
-      alert(`Error: ${error.message}`);
+      // Show full error message on phone
+      alert(error.message);
     } finally {
       setUploading(false);
     }
@@ -117,13 +128,14 @@ export default function VerifyPage() {
   const handleFileChange = (file, type) => {
     if (!file) return;
 
-    // Create preview URL
+    // Create preview URL (will work for images, PDFs need different handling)
     const previewUrl = URL.createObjectURL(file);
+    const isPdf = file.type === 'application/pdf';
 
     switch (type) {
       case 'id':
         setIdFile(file);
-        setIdPreview(previewUrl);
+        setIdPreview(isPdf ? 'PDF' : previewUrl);
         break;
       case 'selfie':
         setSelfieFile(file);
@@ -131,7 +143,7 @@ export default function VerifyPage() {
         break;
       case 'address':
         setAddressProofFile(file);
-        setAddressPreview(previewUrl);
+        setAddressPreview(isPdf ? 'PDF' : previewUrl);
         break;
     }
   };
@@ -231,10 +243,11 @@ export default function VerifyPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             >
               <option value="">Select ID type...</option>
-              <option value="passport">Passport</option>
-              <option value="driving_license">Driving License</option>
-              <option value="national_id">National ID Card</option>
-              <option value="residence_permit">Residence Permit</option>
+              {Object.entries(ID_TYPES).map(([_key, value]) => (
+                <option key={value} value={value}>
+                  {ID_TYPE_LABELS[value]}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -245,21 +258,29 @@ export default function VerifyPage() {
               </label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 onChange={(e) => handleFileChange(e.target.files[0], 'id')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
+              <p className="mt-1 text-xs text-gray-500">Accepts: JPEG, PNG, PDF, etc.</p>
             </div>
           )}
 
           {idPreview && (
             <div className="mt-4">
               <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
-              <img
-                src={idPreview}
-                alt="ID Preview"
-                className="max-w-full h-auto rounded-lg border-2 border-green-500"
-              />
+              {idPreview === 'PDF' ? (
+                <div className="p-8 bg-gray-100 rounded-lg border-2 border-green-500 text-center">
+                  <div className="text-4xl mb-2">📄</div>
+                  <p className="text-sm text-gray-600">PDF Document</p>
+                </div>
+              ) : (
+                <img
+                  src={idPreview}
+                  alt="ID Preview"
+                  className="max-w-full h-auto rounded-lg border-2 border-green-500"
+                />
+              )}
               <p className="mt-2 text-sm text-green-600">✓ {idFile.name}</p>
             </div>
           )}
@@ -298,7 +319,7 @@ export default function VerifyPage() {
               <label className="block">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/heic,image/heif"
                   capture="user"
                   onChange={(e) => handleFileChange(e.target.files[0], 'selfie')}
                   className="block w-full text-sm text-gray-500
@@ -309,6 +330,7 @@ export default function VerifyPage() {
                     hover:file:bg-green-700 file:cursor-pointer cursor-pointer
                     file:transition-colors"
                 />
+                <p className="mt-2 text-xs text-gray-500 text-center">Accepts: JPEG, PNG, HEIC</p>
               </label>
             </div>
           )}
@@ -390,10 +412,11 @@ export default function VerifyPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             >
               <option value="">Select document type...</option>
-              <option value="utility_bill">Utility Bill</option>
-              <option value="bank_statement">Bank Statement</option>
-              <option value="rental_agreement">Rental Agreement</option>
-              <option value="government_letter">Government Letter</option>
+              {Object.entries(ADDRESS_PROOF_TYPES).map(([_key, value]) => (
+                <option key={value} value={value}>
+                  {ADDRESS_PROOF_TYPE_LABELS[value]}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -408,17 +431,25 @@ export default function VerifyPage() {
                 onChange={(e) => handleFileChange(e.target.files[0], 'address')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
+              <p className="mt-1 text-xs text-gray-500">Accepts: JPEG, PNG, PDF, HEIC, etc.</p>
             </div>
           )}
 
           {addressPreview && (
             <div className="mt-4">
               <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
-              <img
-                src={addressPreview}
-                alt="Address Proof Preview"
-                className="max-w-full h-auto rounded-lg border-2 border-green-500"
-              />
+              {addressPreview === 'PDF' ? (
+                <div className="p-8 bg-gray-100 rounded-lg border-2 border-green-500 text-center">
+                  <div className="text-4xl mb-2">📄</div>
+                  <p className="text-sm text-gray-600">PDF Document</p>
+                </div>
+              ) : (
+                <img
+                  src={addressPreview}
+                  alt="Address Proof Preview"
+                  className="max-w-full h-auto rounded-lg border-2 border-green-500"
+                />
+              )}
               <p className="mt-2 text-sm text-green-600">✓ {addressProofFile.name}</p>
             </div>
           )}
