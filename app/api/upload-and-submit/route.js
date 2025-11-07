@@ -2,17 +2,9 @@ import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { createClient } from '@supabase/supabase-js';
 
-const cloudinaryUrl = process.env.CLOUDINARY_URL;
-let cloudName, apiKey, apiSecret;
-
-if (cloudinaryUrl) {
-  const match = cloudinaryUrl.match(/cloudinary:\/\/([^:]+):([^@]+)@(.+)/);
-  if (match) {
-    apiKey = match[1];
-    apiSecret = match[2];
-    cloudName = match[3];
-  }
-}
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
 cloudinary.config({
   cloud_name: cloudName,
