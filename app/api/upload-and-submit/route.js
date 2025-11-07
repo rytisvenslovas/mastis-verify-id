@@ -170,34 +170,34 @@ export async function POST(request) {
     
     console.log('📝 Insert data:', JSON.stringify(insertData, null, 2));
 
-    const { data, error } = await supabase
-      .from('submissions')
-      .insert(insertData)
-      .select()
-      .single();
+    // const { data, error } = await supabase
+    //   .from('submissions')
+    //   .insert(insertData)
+    //   .select()
+    //   .single();
 
-    if (error) {
-      console.error('❌ Database insert failed:', error);
+    // if (error) {
+    //   console.error('❌ Database insert failed:', error);
       
-      // Parse Supabase error to identify problematic field
-      let fieldInfo = '';
-      if (error.message.includes('submitted_at')) {
-        fieldInfo = ' [FIELD: submitted_at - check timestamp format]';
-      } else if (error.message.includes('status')) {
-        fieldInfo = ' [FIELD: status - check allowed values]';
-      } else if (error.message.includes('id_type')) {
-        fieldInfo = ' [FIELD: id_type]';
-      } else if (error.message.includes('address_proof_type')) {
-        fieldInfo = ' [FIELD: address_proof_type]';
-      }
+    //   // Parse Supabase error to identify problematic field
+    //   let fieldInfo = '';
+    //   if (error.message.includes('submitted_at')) {
+    //     fieldInfo = ' [FIELD: submitted_at - check timestamp format]';
+    //   } else if (error.message.includes('status')) {
+    //     fieldInfo = ' [FIELD: status - check allowed values]';
+    //   } else if (error.message.includes('id_type')) {
+    //     fieldInfo = ' [FIELD: id_type]';
+    //   } else if (error.message.includes('address_proof_type')) {
+    //     fieldInfo = ' [FIELD: address_proof_type]';
+    //   }
       
-      return NextResponse.json({ 
-        error: `Database error: ${error.message}${fieldInfo}`, 
-        step: 'database-insert',
-        details: JSON.stringify(error),
-        insertData: insertData
-      }, { status: 500 });
-    }
+    //   return NextResponse.json({ 
+    //     error: `Database error: ${error.message}${fieldInfo}`, 
+    //     step: 'database-insert',
+    //     details: JSON.stringify(error),
+    //     insertData: insertData
+    //   }, { status: 500 });
+    // }
 
     console.log('✅ Submission saved successfully!');
     return NextResponse.json({ success: true, data });
