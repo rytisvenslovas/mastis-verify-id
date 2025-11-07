@@ -12,10 +12,10 @@ cloudinary.config({
   api_secret: apiSecret,
 });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+// const supabase = createClient(
+//   process.env.NEXT_PUBLIC_SUPABASE_URL,
+//   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// );
 
 export async function POST(request) {
   try {
@@ -43,31 +43,31 @@ export async function POST(request) {
     }
 
     console.log('🔍 Validating token...');
-    const { data: linkData, error: linkError } = await supabase
-      .from('links')
-      .select('id')
-      .eq('token', token)
-      .single();
+    // const { data: linkData, error: linkError } = await supabase
+    //   .from('links')
+    //   .select('id')
+    //   .eq('token', token)
+    //   .single();
 
-    if (linkError || !linkData) {
-      console.error('❌ Token validation failed:', linkError);
-      return NextResponse.json({ error: 'Invalid token', step: 'token-validation', details: linkError?.message }, { status: 404 });
-    }
+    // if (linkError || !linkData) {
+    //   console.error('❌ Token validation failed:', linkError);
+    //   return NextResponse.json({ error: 'Invalid token', step: 'token-validation', details: linkError?.message }, { status: 404 });
+    // }
 
-    const documentLinkId = linkData.id;
-    console.log('✅ Token validated, document_link_id:', documentLinkId);
+    // const documentLinkId = linkData.id;
+    // console.log('✅ Token validated, document_link_id:', documentLinkId);
 
     console.log('🔍 Checking for existing submission...');
-    const { data: existing } = await supabase
-      .from('submissions')
-      .select('id')
-      .eq('token', token)
-      .maybeSingle();
+    // const { data: existing } = await supabase
+    //   .from('submissions')
+    //   .select('id')
+    //   .eq('token', token)
+    //   .maybeSingle();
 
-    if (existing) {
-      console.log('⚠️ Submission already exists');
-      return NextResponse.json({ error: 'Documents already submitted for this link', step: 'duplicate-check' }, { status: 400 });
-    }
+    // if (existing) {
+    //   console.log('⚠️ Submission already exists');
+    //   return NextResponse.json({ error: 'Documents already submitted for this link', step: 'duplicate-check' }, { status: 400 });
+    // }
 
     const uploadedData = {};
 
