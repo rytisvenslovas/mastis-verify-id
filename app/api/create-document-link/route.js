@@ -10,7 +10,9 @@ export async function POST(req) {
     }
 
     const token = crypto.randomUUID();
-    const link = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://verify.mastis.co.uk'}/verify/${token}`;
+    // Replace admin subdomain with verify subdomain for links
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace('admin.', 'verify.') || 'https://verify.mastis.co.uk';
+    const link = `${baseUrl}/verify/${token}`;
 
     const { data, error } = await supabase
       .from('links')
