@@ -10,6 +10,18 @@ export default function RootPage() {
 
   useEffect(() => {
     if (!isLoading) {
+      // Check subdomain
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        
+        // If on verify subdomain, show error (root shouldn't be accessed directly)
+        if (hostname.startsWith('verify.')) {
+          router.push('/verify/invalid-link');
+          return;
+        }
+      }
+
+      // For admin subdomain - redirect based on auth status
       if (user) {
         router.push('/admin/document-collection');
       } else {

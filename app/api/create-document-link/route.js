@@ -10,7 +10,7 @@ export async function POST(req) {
     }
 
     const token = crypto.randomUUID();
-    const link = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/verify/${token}`;
+    const link = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://verify.mastis.co.uk'}/verify/${token}`;
 
     const { data, error } = await supabase
       .from('links')

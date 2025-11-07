@@ -3,14 +3,35 @@ import { auth0 } from "./lib/auth0"
 
 export async function middleware(request) {
     const authRes = await auth0.middleware(request);
+    const hostname = request.headers.get('host') || '';
+
+    // Check subdomain
+    const isVerifyDomain = hostname.startsWith('verify.');
+    const isAdminDomain = hostname.startsWith('admin.');
+
+    // VERIFY SUBDOMAIN: verify.mastis.co.uk/[uuid]
+    if (isVerifyDomain) {
+        // All routes on verify domain are public (no auth needed)
+        return authRes;
+    }
+
+    // ADMIN SUBDOMAIN: admin.mastis.co.uk
+    if (isAdminDomain) {
+        // Block /verify routes on admin subdomain
+        if (request.nextUrl.pathname.startsWith('/verify')) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/admin';
+            return NextResponse.redirect(url);
+        }
+    }
 
     // authentication routes — let the middleware handle it
     if (request.nextUrl.pathname.startsWith("/auth")) {
         return authRes;
     }
 
-    // public routes — no need to check for session
-    if (request.nextUrl.pathname === ("/") || request.nextUrl.pathname.startsWith("/verify")) {
+    // public routes — /verify is public
+    if (request.nextUrl.pathname.startsWith("/verify")) {
         return authRes;
     }
 
