@@ -20,27 +20,27 @@ cloudinary.config({
 export async function POST(request) {
   try {
     console.log('📥 Starting upload process...');
-    const formData = await request.formData();
+    // const formData = await request.formData();
     
-    const token = formData.get('token');
-    const idType = formData.get('idType');
-    const idFile = formData.get('idFile');
-    const selfieFile = formData.get('selfieFile');
-    const addressProofType = formData.get('addressProofType');
-    const addressProofFile = formData.get('addressProofFile');
+    // const token = formData.get('token');
+    // const idType = formData.get('idType');
+    // const idFile = formData.get('idFile');
+    // const selfieFile = formData.get('selfieFile');
+    // const addressProofType = formData.get('addressProofType');
+    // const addressProofFile = formData.get('addressProofFile');
 
-    console.log('📋 Form data received:', { 
-      token: !!token, 
-      idType, 
-      idFile: idFile?.name, 
-      selfieFile: selfieFile?.name, 
-      addressProofType, 
-      addressProofFile: addressProofFile?.name 
-    });
+    // console.log('📋 Form data received:', { 
+    //   token: !!token, 
+    //   idType, 
+    //   idFile: idFile?.name, 
+    //   selfieFile: selfieFile?.name, 
+    //   addressProofType, 
+    //   addressProofFile: addressProofFile?.name 
+    // });
 
-    if (!token) {
-      return NextResponse.json({ error: 'Token is required', step: 'validation' }, { status: 400 });
-    }
+    // if (!token) {
+    //   return NextResponse.json({ error: 'Token is required', step: 'validation' }, { status: 400 });
+    // }
 
     console.log('🔍 Validating token...');
     // const { data: linkData, error: linkError } = await supabase
@@ -156,19 +156,19 @@ export async function POST(request) {
 
     // Insert into database
     console.log('💾 Saving to database...');
-    const insertData = {
-      document_link_id: documentLinkId,
-      token,
-      id_type: uploadedData.idType || null,
-      id_picture: uploadedData.idPicture || null,
-      selfie: uploadedData.selfie || null,
-      address_proof_type: uploadedData.addressProofType || null,
-      address_proof_picture: uploadedData.addressProofPicture || null,
-      submitted_at: new Date().toISOString(),
-      status: 'submitted',
-    };
+    // const insertData = {
+    //   document_link_id: documentLinkId,
+    //   token,
+    //   id_type: uploadedData.idType || null,
+    //   id_picture: uploadedData.idPicture || null,
+    //   selfie: uploadedData.selfie || null,
+    //   address_proof_type: uploadedData.addressProofType || null,
+    //   address_proof_picture: uploadedData.addressProofPicture || null,
+    //   submitted_at: new Date().toISOString(),
+    //   status: 'submitted',
+    // };
     
-    console.log('📝 Insert data:', JSON.stringify(insertData, null, 2));
+    // console.log('📝 Insert data:', JSON.stringify(insertData, null, 2));
 
     // const { data, error } = await supabase
     //   .from('submissions')
