@@ -471,11 +471,19 @@ export default function VerifyPage() {
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="font-semibold text-gray-800 mb-2">📇 ID Document</h3>
               <p className="text-sm text-gray-600 mb-2">Type: {idType.replace('_', ' ')}</p>
-              <img
-                src={idPreview}
-                alt="ID"
-                className="max-w-full h-auto rounded-lg"
-              />
+              {idFile.type === 'application/pdf' ? (
+                <iframe
+                  src={idPreview}
+                  className="w-full h-96 rounded-lg"
+                  title="ID Document"
+                />
+              ) : (
+                <img
+                  src={idPreview}
+                  alt="ID"
+                  className="max-w-full h-auto rounded-lg"
+                />
+              )}
             </div>
           )}
 
@@ -494,11 +502,19 @@ export default function VerifyPage() {
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="font-semibold text-gray-800 mb-2">🏠 Proof of Address</h3>
               <p className="text-sm text-gray-600 mb-2">Type: {addressProofType.replace('_', ' ')}</p>
-              <img
-                src={addressPreview}
-                alt="Address Proof"
-                className="max-w-full h-auto rounded-lg"
-              />
+              {addressProofFile.type === 'application/pdf' ? (
+                <iframe
+                  src={addressPreview}
+                  className="w-full h-96 rounded-lg"
+                  title="Address Proof"
+                />
+              ) : (
+                <img
+                  src={addressPreview}
+                  alt="Address Proof"
+                  className="max-w-full h-auto rounded-lg"
+                />
+              )}
             </div>
           )}
         </div>
