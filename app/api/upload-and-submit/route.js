@@ -72,87 +72,87 @@ export async function POST(request) {
     const uploadedData = {};
 
     // Upload ID Document
-    if (idFile) {
-      try {
-        console.log('📤 Uploading ID document:', idFile.name, idFile.type, `${(idFile.size / 1024).toFixed(2)} KB`);
-        const idBuffer = Buffer.from(await idFile.arrayBuffer());
-        const idUpload = await new Promise((resolve, reject) => {
-          cloudinary.uploader.upload_stream(
-            { folder: `${token}/id`, resource_type: 'auto' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          ).end(idBuffer);
-        });
+    // if (idFile) {
+    //   try {
+    //     console.log('📤 Uploading ID document:', idFile.name, idFile.type, `${(idFile.size / 1024).toFixed(2)} KB`);
+    //     const idBuffer = Buffer.from(await idFile.arrayBuffer());
+    //     const idUpload = await new Promise((resolve, reject) => {
+    //       cloudinary.uploader.upload_stream(
+    //         { folder: `${token}/id`, resource_type: 'auto' },
+    //         (error, result) => {
+    //           if (error) reject(error);
+    //           else resolve(result);
+    //         }
+    //       ).end(idBuffer);
+    //     });
         
-        uploadedData.idType = idType;
-        uploadedData.idPicture = idUpload.secure_url;
-        console.log('✅ ID document uploaded:', idUpload.secure_url);
-      } catch (error) {
-        console.error('❌ ID upload failed:', error);
-        return NextResponse.json({ 
-          error: `ID upload failed: ${error.message}`, 
-          step: 'cloudinary-id-upload',
-          details: error.toString()
-        }, { status: 500 });
-      }
-    }
+    //     uploadedData.idType = idType;
+    //     uploadedData.idPicture = idUpload.secure_url;
+    //     console.log('✅ ID document uploaded:', idUpload.secure_url);
+    //   } catch (error) {
+    //     console.error('❌ ID upload failed:', error);
+    //     return NextResponse.json({ 
+    //       error: `ID upload failed: ${error.message}`, 
+    //       step: 'cloudinary-id-upload',
+    //       details: error.toString()
+    //     }, { status: 500 });
+    //   }
+    // }
 
     // Upload Selfie
-    if (selfieFile) {
-      try {
-        console.log('📤 Uploading selfie:', selfieFile.name, selfieFile.type, `${(selfieFile.size / 1024).toFixed(2)} KB`);
-        const selfieBuffer = Buffer.from(await selfieFile.arrayBuffer());
-        const selfieUpload = await new Promise((resolve, reject) => {
-          cloudinary.uploader.upload_stream(
-            { folder: `${token}/selfie`, resource_type: 'auto' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          ).end(selfieBuffer);
-        });
+    // if (selfieFile) {
+    //   try {
+    //     console.log('📤 Uploading selfie:', selfieFile.name, selfieFile.type, `${(selfieFile.size / 1024).toFixed(2)} KB`);
+    //     const selfieBuffer = Buffer.from(await selfieFile.arrayBuffer());
+    //     const selfieUpload = await new Promise((resolve, reject) => {
+    //       cloudinary.uploader.upload_stream(
+    //         { folder: `${token}/selfie`, resource_type: 'auto' },
+    //         (error, result) => {
+    //           if (error) reject(error);
+    //           else resolve(result);
+    //         }
+    //       ).end(selfieBuffer);
+    //     });
         
-        uploadedData.selfie = selfieUpload.secure_url;
-        console.log('✅ Selfie uploaded:', selfieUpload.secure_url);
-      } catch (error) {
-        console.error('❌ Selfie upload failed:', error);
-        return NextResponse.json({ 
-          error: `Selfie upload failed: ${error.message}`, 
-          step: 'cloudinary-selfie-upload',
-          details: error.toString()
-        }, { status: 500 });
-      }
-    }
+    //     uploadedData.selfie = selfieUpload.secure_url;
+    //     console.log('✅ Selfie uploaded:', selfieUpload.secure_url);
+    //   } catch (error) {
+    //     console.error('❌ Selfie upload failed:', error);
+    //     return NextResponse.json({ 
+    //       error: `Selfie upload failed: ${error.message}`, 
+    //       step: 'cloudinary-selfie-upload',
+    //       details: error.toString()
+    //     }, { status: 500 });
+    //   }
+    // }
 
     // Upload Address Proof
-    if (addressProofFile) {
-      try {
-        console.log('📤 Uploading address proof:', addressProofFile.name, addressProofFile.type, `${(addressProofFile.size / 1024).toFixed(2)} KB`);
-        const addressBuffer = Buffer.from(await addressProofFile.arrayBuffer());
-        const addressUpload = await new Promise((resolve, reject) => {
-          cloudinary.uploader.upload_stream(
-            { folder: `${token}/address`, resource_type: 'auto' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          ).end(addressBuffer);
-        });
+    // if (addressProofFile) {
+    //   try {
+    //     console.log('📤 Uploading address proof:', addressProofFile.name, addressProofFile.type, `${(addressProofFile.size / 1024).toFixed(2)} KB`);
+    //     const addressBuffer = Buffer.from(await addressProofFile.arrayBuffer());
+    //     const addressUpload = await new Promise((resolve, reject) => {
+    //       cloudinary.uploader.upload_stream(
+    //         { folder: `${token}/address`, resource_type: 'auto' },
+    //         (error, result) => {
+    //           if (error) reject(error);
+    //           else resolve(result);
+    //         }
+    //       ).end(addressBuffer);
+    //     });
         
-        uploadedData.addressProofType = addressProofType;
-        uploadedData.addressProofPicture = addressUpload.secure_url;
-        console.log('✅ Address proof uploaded:', addressUpload.secure_url);
-      } catch (error) {
-        console.error('❌ Address proof upload failed:', error);
-        return NextResponse.json({ 
-          error: `Address proof upload failed: ${error.message}`, 
-          step: 'cloudinary-address-upload',
-          details: error.toString()
-        }, { status: 500 });
-      }
-    }
+    //     uploadedData.addressProofType = addressProofType;
+    //     uploadedData.addressProofPicture = addressUpload.secure_url;
+    //     console.log('✅ Address proof uploaded:', addressUpload.secure_url);
+    //   } catch (error) {
+    //     console.error('❌ Address proof upload failed:', error);
+    //     return NextResponse.json({ 
+    //       error: `Address proof upload failed: ${error.message}`, 
+    //       step: 'cloudinary-address-upload',
+    //       details: error.toString()
+    //     }, { status: 500 });
+    //   }
+    // }
 
     // Insert into database
     console.log('💾 Saving to database...');
