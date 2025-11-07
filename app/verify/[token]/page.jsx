@@ -128,14 +128,13 @@ export default function VerifyPage() {
   const handleFileChange = (file, type) => {
     if (!file) return;
 
-    // Create preview URL (will work for images, PDFs need different handling)
+    // Create preview URL
     const previewUrl = URL.createObjectURL(file);
-    const isPdf = file.type === 'application/pdf';
 
     switch (type) {
       case 'id':
         setIdFile(file);
-        setIdPreview(isPdf ? 'PDF' : previewUrl);
+        setIdPreview(previewUrl);
         break;
       case 'selfie':
         setSelfieFile(file);
@@ -143,7 +142,7 @@ export default function VerifyPage() {
         break;
       case 'address':
         setAddressProofFile(file);
-        setAddressPreview(isPdf ? 'PDF' : previewUrl);
+        setAddressPreview(previewUrl);
         break;
     }
   };
@@ -269,11 +268,12 @@ export default function VerifyPage() {
           {idPreview && (
             <div className="mt-4">
               <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
-              {idPreview === 'PDF' ? (
-                <div className="p-8 bg-gray-100 rounded-lg border-2 border-green-500 text-center">
-                  <div className="text-4xl mb-2">📄</div>
-                  <p className="text-sm text-gray-600">PDF Document</p>
-                </div>
+              {idFile.type === 'application/pdf' ? (
+                <iframe
+                  src={idPreview}
+                  className="w-full h-96 rounded-lg border-2 border-green-500"
+                  title="ID Document Preview"
+                />
               ) : (
                 <img
                   src={idPreview}
@@ -438,11 +438,12 @@ export default function VerifyPage() {
           {addressPreview && (
             <div className="mt-4">
               <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
-              {addressPreview === 'PDF' ? (
-                <div className="p-8 bg-gray-100 rounded-lg border-2 border-green-500 text-center">
-                  <div className="text-4xl mb-2">📄</div>
-                  <p className="text-sm text-gray-600">PDF Document</p>
-                </div>
+              {addressProofFile.type === 'application/pdf' ? (
+                <iframe
+                  src={addressPreview}
+                  className="w-full h-96 rounded-lg border-2 border-green-500"
+                  title="Address Proof Preview"
+                />
               ) : (
                 <img
                   src={addressPreview}
