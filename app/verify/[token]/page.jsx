@@ -92,26 +92,26 @@ export default function VerifyPage() {
         formData.append('addressProofFile', addressProofFile);
       }
 
-      // Upload to Cloudinary AND save to Supabase in one API call
-      const res = await fetch('/api/upload-and-submit', {
-        method: 'POST',
-        body: formData,
-      });
+    //   // Upload to Cloudinary AND save to Supabase in one API call
+    //   const res = await fetch('/api/upload-and-submit', {
+    //     method: 'POST',
+    //     body: formData,
+    //   });
 
-      const result = await res.json();
+    //   const result = await res.json();
 
-      if (!res.ok) {
-        // Show detailed error info on phone
-        const errorMsg = [
-          `❌ ${result.error}`,
-          ``,
-          `Step: ${result.step || 'unknown'}`,
-          result.details ? `Details: ${result.details}` : '',
-          result.insertData ? `Data sent: ${JSON.stringify(result.insertData, null, 2)}` : ''
-        ].filter(Boolean).join('\n');
+    //   if (!res.ok) {
+    //     // Show detailed error info on phone
+    //     const errorMsg = [
+    //       `❌ ${result.error}`,
+    //       ``,
+    //       `Step: ${result.step || 'unknown'}`,
+    //       result.details ? `Details: ${result.details}` : '',
+    //       result.insertData ? `Data sent: ${JSON.stringify(result.insertData, null, 2)}` : ''
+    //     ].filter(Boolean).join('\n');
         
-        throw new Error(errorMsg);
-      }
+    //     throw new Error(errorMsg);
+    //   }
 
       // Success!
       alert('Documents submitted successfully! ✅');
