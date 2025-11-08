@@ -98,7 +98,7 @@ export default function VerifyPage() {
         body: formData,
       });
 
-      const result = await res.json();
+    //   const result = await res.json();
 
     //   if (!res.ok) {
     //     // Show detailed error info on phone
