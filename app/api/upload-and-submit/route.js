@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { createClient } from '@supabase/supabase-js';
 
+export const runtime = 'nodejs';
+
 /* ───────────────── Cloudinary ───────────────── */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -27,26 +29,24 @@ const isAllowedType = (file) => {
   return mime.startsWith('image/') || mime === 'application/pdf';
 };
 
-const resourceTypeFor = (file) => {
-  const mime = file?.type || '';
-  // PDFs must be served as "raw"
-  if (mime === 'application/pdf') return 'raw';
-  // Everything else we accept is an image/*
-  return 'image';
-};
+// Upload PDFs as "image" so they render inline in the browser
+const resourceTypeFor = (file) => 'image';
 
-const uploadBuffer = (buffer, { folder, resource_type, public_id }) =>
+const uploadBuffer = (buffer, { folder, resource_type, public_id, format }) =>
   new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type,           // 'image' | 'raw'
-        access_mode: 'public',   // publicly viewable
-        type: 'upload',
-        public_id,               // optional: keep undefined to auto-generate
-      },
-      (err, res) => (err ? reject(err) : resolve(res))
-    ).end(buffer);
+    cloudinary.uploader
+      .upload_stream(
+        {
+          folder,
+          resource_type,           // always 'image' here (images & pdfs)
+          access_mode: 'public',   // publicly viewable
+          type: 'upload',
+          public_id,               // optional: keep undefined to auto-generate
+          ...(format ? { format } : {}),
+        },
+        (err, res) => (err ? reject(err) : resolve(res))
+      )
+      .end(buffer);
   });
 
 const fail = (status, payload) => NextResponse.json(payload, { status });
@@ -105,11 +105,21 @@ export async function POST(request) {
         throw new Error(`Unsupported file type: ${file.type}. Only images and PDFs are allowed.`);
       }
       if (file.size > MAX_FILE_BYTES) {
-        throw new Error(`File too large: ${(file.size / (1024*1024)).toFixed(1)}MB (max ${MAX_FILE_BYTES/(1024*1024)}MB).`);
+        throw new Error(
+          `File too large: ${(file.size / (1024 * 1024)).toFixed(1)}MB (max ${MAX_FILE_BYTES / (1024 * 1024)}MB).`
+        );
       }
+
       const buffer = Buffer.from(await file.arrayBuffer());
-      const resource_type = resourceTypeFor(file); // 'image' for images, 'raw' for pdf
-      const res = await uploadBuffer(buffer, { folder, resource_type });
+      const resource_type = resourceTypeFor(file); // always 'image' (images & pdfs)
+      const isPdf = file.type === 'application/pdf';
+
+      const res = await uploadBuffer(buffer, {
+        folder,
+        resource_type,
+        format: isPdf ? 'pdf' : undefined,
+      });
+
       return res.secure_url;
     };
 
