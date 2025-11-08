@@ -465,11 +465,19 @@ const DocumentCollection = () => {
               <div className="border-b pb-4">
                 <h4 className="font-semibold mb-2">ID Document</h4>
                 <p className="text-sm text-gray-600 mb-2">Type: {selectedSubmission.submission[0].id_type}</p>
-                <img 
-                  src={selectedSubmission.submission[0].id_picture} 
-                  alt="ID Document" 
-                  className="max-w-full h-auto rounded border"
-                />
+                {selectedSubmission.submission[0].id_picture.toLowerCase().endsWith('.pdf') ? (
+                  <iframe
+                    src={selectedSubmission.submission[0].id_picture}
+                    className="w-full h-96 rounded border"
+                    title="ID Document PDF"
+                  />
+                ) : (
+                  <img 
+                    src={selectedSubmission.submission[0].id_picture} 
+                    alt="ID Document" 
+                    className="max-w-full h-auto rounded border"
+                  />
+                )}
               </div>
             )}
 
@@ -489,11 +497,19 @@ const DocumentCollection = () => {
               <div className="border-b pb-4">
                 <h4 className="font-semibold mb-2">Address Proof</h4>
                 <p className="text-sm text-gray-600 mb-2">Type: {selectedSubmission.submission[0].address_proof_type}</p>
-                <img 
-                  src={selectedSubmission.submission[0].address_proof_picture} 
-                  alt="Address Proof" 
-                  className="max-w-full h-auto rounded border"
-                />
+                {selectedSubmission.submission[0].address_proof_picture.toLowerCase().endsWith('.pdf') ? (
+                  <iframe
+                    src={selectedSubmission.submission[0].address_proof_picture}
+                    className="w-full h-96 rounded border"
+                    title="Address Proof PDF"
+                  />
+                ) : (
+                  <img 
+                    src={selectedSubmission.submission[0].address_proof_picture} 
+                    alt="Address Proof" 
+                    className="max-w-full h-auto rounded border"
+                  />
+                )}
               </div>
             )}
 
