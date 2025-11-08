@@ -65,7 +65,12 @@ export async function POST(request) {
         const idBuffer = Buffer.from(await idFile.arrayBuffer());
         const idUpload = await new Promise((resolve, reject) => {
           cloudinary.uploader.upload_stream(
-            { folder: `${token}/id`, resource_type: 'auto' },
+            { 
+              folder: `${token}/id`, 
+              resource_type: 'auto',
+              type: 'upload',
+              access_mode: 'public'
+            },
             (error, result) => {
               if (error) reject(error);
               else resolve(result);
@@ -92,7 +97,12 @@ export async function POST(request) {
         const selfieBuffer = Buffer.from(await selfieFile.arrayBuffer());
         const selfieUpload = await new Promise((resolve, reject) => {
           cloudinary.uploader.upload_stream(
-            { folder: `${token}/selfie`, resource_type: 'auto' },
+            { 
+              folder: `${token}/selfie`, 
+              resource_type: 'auto',
+              type: 'upload',
+              access_mode: 'public'
+            },
             (error, result) => {
               if (error) reject(error);
               else resolve(result);
@@ -119,7 +129,12 @@ export async function POST(request) {
         const addressBuffer = Buffer.from(await addressProofFile.arrayBuffer());
         const addressUpload = await new Promise((resolve, reject) => {
           cloudinary.uploader.upload_stream(
-            { folder: `${token}/address`, resource_type: 'auto' },
+            { 
+              folder: `${token}/address`, 
+              resource_type: 'auto',
+              type: 'upload',
+              access_mode: 'public'
+            },
             (error, result) => {
               if (error) reject(error);
               else resolve(result);
