@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Modal from './Modal';
+import SearchAndFilters from './SearchAndFilters';
+import DocumentLinkCard from './DocumentLinkCard';
+import Pagination from './Pagination';
+import CreateLinkModal from './CreateLinkModal';
+import ViewSubmissionModal from './ViewSubmissionModal';
 
 const DocumentCollection = () => {
   const [loading, setLoading] = useState(true);
@@ -177,52 +181,21 @@ const DocumentCollection = () => {
 
   return (
     <div className="p-6">
-      <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-        <div className="flex gap-4 items-center flex-1 min-w-[300px]">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={handleSearch}
-            placeholder="Search by name, surname, email, or phone..."
-            className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-          
-          <div className="flex gap-4 items-center">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filterPending}
-                onChange={(e) => {
-                  setFilterPending(e.target.checked);
-                  setCurrentPage(1);
-                }}
-                className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Pending</span>
-            </label>
-            
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filterSubmitted}
-                onChange={(e) => {
-                  setFilterSubmitted(e.target.checked);
-                  setCurrentPage(1);
-                }}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Submitted</span>
-            </label>
-          </div>
-        </div>
-        
-        <button
-          onClick={handleOpenModal}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 whitespace-nowrap"
-        >
-          ➕ Generate New Link
-        </button>
-      </div>
+      <SearchAndFilters
+        searchTerm={searchTerm}
+        onSearchChange={handleSearch}
+        filterPending={filterPending}
+        onPendingChange={(e) => {
+          setFilterPending(e.target.checked);
+          setCurrentPage(1);
+        }}
+        filterSubmitted={filterSubmitted}
+        onSubmittedChange={(e) => {
+          setFilterSubmitted(e.target.checked);
+          setCurrentPage(1);
+        }}
+        onCreateNew={handleOpenModal}
+      />
 
       {loading ? (
         <div className="flex items-center justify-center h-32">
@@ -232,333 +205,55 @@ const DocumentCollection = () => {
         <p className="text-gray-500">No document links found.</p>
       ) : (
         <>
-        <div className="max-h-[500px] overflow-y-auto pr-2">
-          <ul className="space-y-2">
-            {currentLinks.map((docLink) => {
-              const status = getSubmissionStatus(docLink);
-              const hasSubmission = docLink.submission && docLink.submission.length > 0;
-              
-              return (
-              <li 
-                key={docLink.id} 
-                className={`bg-white shadow-md rounded-lg p-4 border border-gray-200 ${hasSubmission ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
-                onClick={() => hasSubmission && handleViewSubmission(docLink)}
-              >
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-base sm:text-lg">
-                        {docLink.name} {docLink.surname}
-                      </h3>
-                      <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${status.color}`}>
-                        {status.text}
-                      </span>
-                    </div>
-                    {docLink.email && <p className="text-sm text-gray-600 break-all">📧 {docLink.email}</p>}
-                    {docLink.phone && <p className="text-sm text-gray-600">📱 {docLink.phone}</p>}
-                    <div className="mt-2 flex gap-2 flex-wrap">
-                      {docLink.require_id && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">ID</span>
-                      )}
-                      {docLink.require_selfie && (
-                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Selfie</span>
-                      )}
-                      {docLink.require_address_proof && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Address</span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Created: {new Date(docLink.created_at).toLocaleString()}
-                    </p>
-                    {hasSubmission && (
-                      <p className="text-xs text-blue-600 mt-1">
-                        👆 Click to view uploaded documents
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-2 sm:ml-4" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => handleCopyLink(docLink.link)}
-                      className="flex-1 sm:flex-none px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap"
-                    >
-                      Copy Link
-                    </button>
-                    <button
-                      onClick={() => handleDelete(docLink.id)}
-                      className="flex-1 sm:flex-none px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </li>
-              );
-            })}
-          </ul>
-        </div>
-        
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            
-            <div className="flex gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => goToPage(page)}
-                  className={`px-3 py-1 text-sm rounded ${
-                    currentPage === page
-                      ? 'bg-lime-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {page}
-                </button>
+          <div className="max-h-[500px] overflow-y-auto pr-2">
+            <ul className="space-y-2">
+              {currentLinks.map((docLink) => (
+                <DocumentLinkCard
+                  key={docLink.id}
+                  docLink={docLink}
+                  status={getSubmissionStatus(docLink)}
+                  onView={handleViewSubmission}
+                  onCopyLink={handleCopyLink}
+                  onDelete={handleDelete}
+                />
               ))}
-            </div>
-            
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
+            </ul>
           </div>
-        )}
+          
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+          />
         </>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold mb-4">Generate Document Collection Link</h3>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter name"
-            />
-          </div>
+      <CreateLinkModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        name={name}
+        setName={setName}
+        surname={surname}
+        setSurname={setSurname}
+        email={email}
+        setEmail={setEmail}
+        phone={phone}
+        setPhone={setPhone}
+        requireId={requireId}
+        setRequireId={setRequireId}
+        requireSelfie={requireSelfie}
+        setRequireSelfie={setRequireSelfie}
+        requireAddressProof={requireAddressProof}
+        setRequireAddressProof={setRequireAddressProof}
+        onSubmit={handleCreateLink}
+        isCreating={isCreating}
+      />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Surname
-            </label>
-            <input
-              type="text"
-              value={surname}
-              onChange={(e) => setSurname(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter surname"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter email"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter phone number"
-            />
-          </div>
-
-          <div className="pt-4 border-t">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Required Documents
-            </label>
-            
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="requireId"
-                  checked={requireId}
-                  onChange={(e) => setRequireId(e.target.checked)}
-                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                />
-                <label htmlFor="requireId" className="ml-2 text-sm text-gray-700">
-                  ID Document (Default: Required)
-                </label>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="requireSelfie"
-                  checked={requireSelfie}
-                  onChange={(e) => setRequireSelfie(e.target.checked)}
-                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                />
-                <label htmlFor="requireSelfie" className="ml-2 text-sm text-gray-700">
-                  Selfie
-                </label>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="requireAddressProof"
-                  checked={requireAddressProof}
-                  onChange={(e) => setRequireAddressProof(e.target.checked)}
-                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                />
-                <label htmlFor="requireAddressProof" className="ml-2 text-sm text-gray-700">
-                  Address Proof
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4">
-            <button
-              onClick={handleCreateLink}
-              disabled={isCreating || !name.trim() || !surname.trim()}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            >
-              {isCreating ? (
-                <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                'Create Link'
-              )}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
-        {selectedSubmission && selectedSubmission.submission && selectedSubmission.submission[0] && (
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold mb-4">
-              Uploaded Documents - {selectedSubmission.name} {selectedSubmission.surname}
-            </h3>
-
-            {selectedSubmission.submission[0].id_picture && (
-              <div className="border-b pb-4">
-                <h4 className="font-semibold mb-2">ID Document</h4>
-                <p className="text-sm text-gray-600 mb-2">Type: {selectedSubmission.submission[0].id_type}</p>
-                {selectedSubmission.submission[0].id_picture.toLowerCase().includes('.pdf') ? (
-                  <div className="space-y-2">
-                    <a
-                      href={selectedSubmission.submission[0].id_picture}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                    >
-                      📄 Open PDF in New Tab
-                    </a>
-                    <object
-                      data={selectedSubmission.submission[0].id_picture}
-                      type="application/pdf"
-                      className="w-full h-96 rounded border"
-                    >
-                      <p className="text-sm text-gray-500 p-4">
-                        PDF preview not available. 
-                        <a href={selectedSubmission.submission[0].id_picture} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
-                          Click here to view
-                        </a>
-                      </p>
-                    </object>
-                  </div>
-                ) : (
-                  <img 
-                    src={selectedSubmission.submission[0].id_picture} 
-                    alt="ID Document" 
-                    className="max-w-full h-auto rounded border"
-                  />
-                )}
-              </div>
-            )}
-
-            {selectedSubmission.submission[0].selfie && (
-              <div className="border-b pb-4">
-                <h4 className="font-semibold mb-2">Selfie</h4>
-                <img 
-                  src={selectedSubmission.submission[0].selfie} 
-                  alt="Selfie" 
-                  className="max-w-full h-auto rounded border"
-                />
-              </div>
-            )}
-
-            {/* Address Proof */}
-            {selectedSubmission.submission[0].address_proof_picture && (
-              <div className="border-b pb-4">
-                <h4 className="font-semibold mb-2">Address Proof</h4>
-                <p className="text-sm text-gray-600 mb-2">Type: {selectedSubmission.submission[0].address_proof_type}</p>
-                {selectedSubmission.submission[0].address_proof_picture.toLowerCase().includes('.pdf') ? (
-                  <div className="space-y-2">
-                    <a
-                      href={selectedSubmission.submission[0].address_proof_picture}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                    >
-                      📄 Open PDF in New Tab
-                    </a>
-                    <object
-                      data={selectedSubmission.submission[0].address_proof_picture}
-                      type="application/pdf"
-                      className="w-full h-96 rounded border"
-                    >
-                      <p className="text-sm text-gray-500 p-4">
-                        PDF preview not available. 
-                        <a href={selectedSubmission.submission[0].address_proof_picture} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
-                          Click here to view
-                        </a>
-                      </p>
-                    </object>
-                  </div>
-                ) : (
-                  <img 
-                    src={selectedSubmission.submission[0].address_proof_picture} 
-                    alt="Address Proof" 
-                    className="max-w-full h-auto rounded border"
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Submission Info */}
-            <div className="mt-4 bg-gray-50 p-3 rounded">
-              <p className="text-sm text-gray-600">
-                Status: <span className="font-semibold">{selectedSubmission.submission[0].status}</span>
-              </p>
-              <p className="text-sm text-gray-600">
-                Submitted: {new Date(selectedSubmission.submission[0].submitted_at).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <ViewSubmissionModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        submission={selectedSubmission}
+      />
     </div>
   );
 };
