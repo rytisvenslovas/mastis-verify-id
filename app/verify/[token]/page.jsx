@@ -98,21 +98,6 @@ export default function VerifyPage() {
         body: formData,
       });
 
-    //   const result = await res.json();
-
-    //   if (!res.ok) {
-    //     // Show detailed error info on phone
-    //     const errorMsg = [
-    //       `❌ ${result.error}`,
-    //       ``,
-    //       `Step: ${result.step || 'unknown'}`,
-    //       result.details ? `Details: ${result.details}` : '',
-    //       result.insertData ? `Data sent: ${JSON.stringify(result.insertData, null, 2)}` : ''
-    //     ].filter(Boolean).join('\n');
-        
-    //     throw new Error(errorMsg);
-    //   }
-
       // Success!
       alert('Documents submitted successfully! ✅');
       window.location.reload();

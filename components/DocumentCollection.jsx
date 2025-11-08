@@ -14,6 +14,7 @@ const DocumentCollection = () => {
   const itemsPerPage = 20;
   const [filterPending, setFilterPending] = useState(false);
   const [filterSubmitted, setFilterSubmitted] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
@@ -75,6 +76,10 @@ const DocumentCollection = () => {
       return;
     }
 
+    if (isCreating) return; // Prevent double submission
+
+    setIsCreating(true);
+
     try {
       const res = await fetch('/api/create-document-link', {
         method: 'POST',
@@ -104,6 +109,8 @@ const DocumentCollection = () => {
     } catch (err) {
       console.error('Error creating document link:', err);
       alert(`Failed to create document link: ${err.message}`);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -237,17 +244,17 @@ const DocumentCollection = () => {
                 className={`bg-white shadow-md rounded-lg p-4 border border-gray-200 ${hasSubmission ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
                 onClick={() => hasSubmission && handleViewSubmission(docLink)}
               >
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-base sm:text-lg">
                         {docLink.name} {docLink.surname}
                       </h3>
-                      <span className={`text-xs px-2 py-1 rounded ${status.color}`}>
+                      <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${status.color}`}>
                         {status.text}
                       </span>
                     </div>
-                    {docLink.email && <p className="text-sm text-gray-600">📧 {docLink.email}</p>}
+                    {docLink.email && <p className="text-sm text-gray-600 break-all">📧 {docLink.email}</p>}
                     {docLink.phone && <p className="text-sm text-gray-600">📱 {docLink.phone}</p>}
                     <div className="mt-2 flex gap-2 flex-wrap">
                       {docLink.require_id && (
@@ -269,16 +276,16 @@ const DocumentCollection = () => {
                       </p>
                     )}
                   </div>
-                  <div className="flex gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-2 sm:ml-4" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => handleCopyLink(docLink.link)}
-                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="flex-1 sm:flex-none px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap"
                     >
                       Copy Link
                     </button>
                     <button
                       onClick={() => handleDelete(docLink.id)}
-                      className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                      className="flex-1 sm:flex-none px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
                     >
                       Delete
                     </button>
@@ -434,10 +441,14 @@ const DocumentCollection = () => {
           <div className="pt-4">
             <button
               onClick={handleCreateLink}
-              disabled={loading}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={isCreating || !name.trim() || !surname.trim()}
+              className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
-              {loading ? 'Creating...' : 'Create Link'}
+              {isCreating ? (
+                <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                'Create Link'
+              )}
             </button>
           </div>
         </div>
