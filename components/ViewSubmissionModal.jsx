@@ -14,7 +14,39 @@ const isPdfUrl = (url) =>
   typeof url === 'string' &&
   (/\.(pdf)(\?|#|$)/i.test(url) || /\/raw\/upload\//i.test(url));
 
-const SafeExternalLink = ({ href, children, className, 'aria-label': ariaLabel }) => {
+/**
+ * Best-effort: turn Cloudinary raw PDF URLs into inline-viewable delivery URLs.
+ * - /raw/upload/  -> /upload/
+ * - remove fl_attachment to avoid forced download
+ * - append #view=FitH for nicer default zoom (harmless if unsupported)
+ */
+const toInlinePdfUrl = (url) => {
+  if (!isHttpUrl(url)) return url;
+
+  let out = url;
+
+  // Cloudinary raw -> delivery
+  out = out.replace(/\/raw\/upload\//i, '/upload/');
+
+  // Strip fl_attachment from query if present
+  try {
+    const u = new URL(out);
+    if (u.searchParams.has('fl_attachment')) {
+      u.searchParams.delete('fl_attachment');
+    }
+    out = u.toString();
+  } catch {
+    // noop
+  }
+
+  if (!out.includes('#')) {
+    out += '#view=FitH';
+  }
+
+  return out;
+};
+
+const SafeExternalLink = ({ href, children, className, 'aria-label': ariaLabel, downloadName }) => {
   if (!isHttpUrl(href)) return null;
   return (
     <a
@@ -23,7 +55,7 @@ const SafeExternalLink = ({ href, children, className, 'aria-label': ariaLabel }
       rel="noopener noreferrer"
       className={className}
       aria-label={ariaLabel}
-      download
+      download={downloadName || true}
     >
       {children}
     </a>
@@ -34,19 +66,11 @@ const ImageWithFallback = ({ src, alt, className }) => {
   const [broken, setBroken] = React.useState(false);
 
   if (!isHttpUrl(src)) {
-    return (
-      <div className="text-xs text-red-600">
-        Invalid image URL
-      </div>
-    );
+    return <div className="text-xs text-red-600">Invalid image URL</div>;
   }
 
   if (broken) {
-    return (
-      <div className="text-xs text-red-600">
-        Couldn’t load image
-      </div>
-    );
+    return <div className="text-xs text-red-600">Couldn’t load image</div>;
   }
 
   return (
@@ -61,28 +85,76 @@ const ImageWithFallback = ({ src, alt, className }) => {
   );
 };
 
+const PdfInlineViewer = ({ url, title }) => {
+  const [iframeFailed, setIframeFailed] = React.useState(false);
+  const [objectFailed, setObjectFailed] = React.useState(false);
+
+  const inlineUrl = useMemo(() => toInlinePdfUrl(url), [url]);
+
+  return (
+    <div className="space-y-2">
+      {!iframeFailed && (
+        <div className="w-full">
+          <div className="border rounded overflow-hidden">
+            <iframe
+              title={title || 'PDF preview'}
+              src={inlineUrl}
+              className="w-full"
+              style={{ height: '70vh' }}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={() => setIframeFailed(true)}
+            />
+          </div>
+          <p className="text-[11px] text-gray-500 mt-1">
+            If the preview doesn’t load, use the download button below.
+          </p>
+        </div>
+      )}
+
+      {iframeFailed && !objectFailed && (
+        <div className="w-full">
+          <object
+            data={inlineUrl}
+            type="application/pdf"
+            className="w-full"
+            style={{ height: '70vh' }}
+            onError={() => setObjectFailed(true)}
+          >
+            <embed src={inlineUrl} type="application/pdf" className="w-full" />
+          </object>
+          <p className="text-[11px] text-gray-500 mt-1">
+            Your browser may have blocked inline PDFs. Use the download button below.
+          </p>
+        </div>
+      )}
+
+      {(iframeFailed && objectFailed) && (
+        <p className="text-sm text-gray-600">
+          Inline preview unavailable. Please open in a new tab:
+        </p>
+      )}
+
+      <div>
+        <SafeExternalLink
+          href={url}
+          aria-label={`Open PDF: ${title || 'document'}`}
+          className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+        >
+          📄 Open / Download PDF
+        </SafeExternalLink>
+      </div>
+    </div>
+  );
+};
+
 const DocumentPreview = ({ url, alt }) => {
   if (!url || !isHttpUrl(url)) {
     return <p className="text-xs text-gray-500">No document provided.</p>;
   }
 
-  const pdf = isPdfUrl(url);
-
-  if (pdf) {
-    return (
-      <div className="space-y-2">
-        <SafeExternalLink
-          href={url}
-          aria-label={`Open PDF: ${alt || 'document'}`}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-        >
-          📄 Download / View PDF
-        </SafeExternalLink>
-        <p className="text-xs text-gray-500">
-          Opens the PDF in a new tab.
-        </p>
-      </div>
-    );
+  if (isPdfUrl(url)) {
+    return <PdfInlineViewer url={url} title={alt} />;
   }
 
   return (
@@ -102,21 +174,17 @@ const LabeledSection = ({ title, children }) => (
 );
 
 const ViewSubmissionModal = ({ isOpen, onClose, submission }) => {
-  // Defensive read
   const data = submission?.submission?.[0] ?? null;
 
   const displayName = useMemo(() => {
-    const first = submission?.name?.trim() || '';
-    const last = submission?.surname?.trim() || '';
+    const first = (submission?.name || '').trim();
+    const last = (submission?.surname || '').trim();
     const full = `${first} ${last}`.trim();
     return full || 'Unknown Applicant';
   }, [submission?.name, submission?.surname]);
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return null;
 
-  // Format date safely
   const submittedAt = (() => {
     if (!data.submitted_at) return null;
     const d = new Date(data.submitted_at);
@@ -165,14 +233,10 @@ const ViewSubmissionModal = ({ isOpen, onClose, submission }) => {
 
         <div className="mt-4 bg-gray-50 p-3 rounded">
           <p className="text-sm text-gray-600">
-            Status:{' '}
-            <span className="font-semibold">
-              {data.status || 'Unknown'}
-            </span>
+            Status: <span className="font-semibold">{data.status || 'Unknown'}</span>
           </p>
           <p className="text-sm text-gray-600">
-            Submitted:{' '}
-            {submittedAt ? submittedAt : '—'}
+            Submitted: {submittedAt || '—'}
           </p>
         </div>
       </div>
