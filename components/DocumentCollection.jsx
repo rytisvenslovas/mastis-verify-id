@@ -465,12 +465,29 @@ const DocumentCollection = () => {
               <div className="border-b pb-4">
                 <h4 className="font-semibold mb-2">ID Document</h4>
                 <p className="text-sm text-gray-600 mb-2">Type: {selectedSubmission.submission[0].id_type}</p>
-                {selectedSubmission.submission[0].id_picture.toLowerCase().endsWith('.pdf') ? (
-                  <iframe
-                    src={selectedSubmission.submission[0].id_picture}
-                    className="w-full h-96 rounded border"
-                    title="ID Document PDF"
-                  />
+                {selectedSubmission.submission[0].id_picture.toLowerCase().includes('.pdf') ? (
+                  <div className="space-y-2">
+                    <a
+                      href={selectedSubmission.submission[0].id_picture}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                    >
+                      📄 Open PDF in New Tab
+                    </a>
+                    <object
+                      data={selectedSubmission.submission[0].id_picture}
+                      type="application/pdf"
+                      className="w-full h-96 rounded border"
+                    >
+                      <p className="text-sm text-gray-500 p-4">
+                        PDF preview not available. 
+                        <a href={selectedSubmission.submission[0].id_picture} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                          Click here to view
+                        </a>
+                      </p>
+                    </object>
+                  </div>
                 ) : (
                   <img 
                     src={selectedSubmission.submission[0].id_picture} 
@@ -497,12 +514,29 @@ const DocumentCollection = () => {
               <div className="border-b pb-4">
                 <h4 className="font-semibold mb-2">Address Proof</h4>
                 <p className="text-sm text-gray-600 mb-2">Type: {selectedSubmission.submission[0].address_proof_type}</p>
-                {selectedSubmission.submission[0].address_proof_picture.toLowerCase().endsWith('.pdf') ? (
-                  <iframe
-                    src={selectedSubmission.submission[0].address_proof_picture}
-                    className="w-full h-96 rounded border"
-                    title="Address Proof PDF"
-                  />
+                {selectedSubmission.submission[0].address_proof_picture.toLowerCase().includes('.pdf') ? (
+                  <div className="space-y-2">
+                    <a
+                      href={selectedSubmission.submission[0].address_proof_picture}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                    >
+                      📄 Open PDF in New Tab
+                    </a>
+                    <object
+                      data={selectedSubmission.submission[0].address_proof_picture}
+                      type="application/pdf"
+                      className="w-full h-96 rounded border"
+                    >
+                      <p className="text-sm text-gray-500 p-4">
+                        PDF preview not available. 
+                        <a href={selectedSubmission.submission[0].address_proof_picture} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                          Click here to view
+                        </a>
+                      </p>
+                    </object>
+                  </div>
                 ) : (
                   <img 
                     src={selectedSubmission.submission[0].address_proof_picture} 
