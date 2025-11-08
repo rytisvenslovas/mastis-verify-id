@@ -93,7 +93,7 @@ export default function VerifyPage() {
       }
 
       // Upload to Cloudinary AND save to Supabase in one API call
-      const res = await fetch('/api/upload-and-submit', {
+       await fetch('/api/upload-and-submit', {
         method: 'POST',
         body: formData,
       });
@@ -114,7 +114,7 @@ export default function VerifyPage() {
     //   }
 
       // Success!
-      alert('Documents submitted successfully! ✅', result);
+      alert('Documents submitted successfully! ✅');
       window.location.reload();
     } catch (error) {
       console.error('Submission error:', error);
