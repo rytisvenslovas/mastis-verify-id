@@ -1,4 +1,3 @@
-// app/api/submit/route.js
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { createClient } from '@supabase/supabase-js';
@@ -23,26 +22,41 @@ const supabase = createClient(
 const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB safety cap
 
 const isFile = (x) => typeof x === 'object' && x && typeof x.arrayBuffer === 'function';
-
 const isAllowedType = (file) => {
   const mime = file?.type || '';
   return mime.startsWith('image/') || mime === 'application/pdf';
 };
 
-// Upload PDFs as "image" so they render inline in the browser
-const resourceTypeFor = (file) => 'image';
+const resourceTypeFor = (file) =>
+  file?.type === 'application/pdf' ? 'raw' : 'image';
 
-const uploadBuffer = (buffer, { folder, resource_type, public_id, format }) =>
+// build a URL for storing in DB:
+//  - images: use the returned secure_url
+//  - pdfs (raw): signed URL with flags to render inline (not download)
+const viewUrlFor = (uploadRes, { isPdf }) => {
+  if (!isPdf) return uploadRes.secure_url;
+
+  // When resource_type==='raw', default delivery is attachment.
+  // Use a SIGNED inline URL to avoid 401 with strict transforms.
+  return cloudinary.url(uploadRes.public_id, {
+    resource_type: 'raw',
+    type: uploadRes.type || 'upload',
+    flags: 'attachment:false', // inline disposition
+    secure: true,
+    sign_url: true,
+  });
+};
+
+const uploadBuffer = (buffer, { folder, resource_type, public_id }) =>
   new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
         {
           folder,
-          resource_type,           // always 'image' here (images & pdfs)
+          resource_type,           // 'image' | 'raw'
           access_mode: 'public',   // publicly viewable
           type: 'upload',
-          public_id,               // optional: keep undefined to auto-generate
-          ...(format ? { format } : {}),
+          public_id,
         },
         (err, res) => (err ? reject(err) : resolve(res))
       )
@@ -89,7 +103,6 @@ export async function POST(request) {
       return fail(400, { error: 'Documents already submitted for this link', step: 'duplicate-check' });
     }
 
-    // Prepare result container
     const uploadedData = {
       idType: null,
       idPicture: null,                 // URL
@@ -98,33 +111,28 @@ export async function POST(request) {
       addressProofPicture: null,       // URL
     };
 
-    // Small utility to handle a single upload
     const handleUpload = async (file, folder) => {
       if (!isFile(file)) return null;
       if (!isAllowedType(file)) {
         throw new Error(`Unsupported file type: ${file.type}. Only images and PDFs are allowed.`);
       }
       if (file.size > MAX_FILE_BYTES) {
-        throw new Error(
-          `File too large: ${(file.size / (1024 * 1024)).toFixed(1)}MB (max ${MAX_FILE_BYTES / (1024 * 1024)}MB).`
-        );
+        throw new Error(`File too large: ${(file.size / (1024*1024)).toFixed(1)}MB (max ${MAX_FILE_BYTES/(1024*1024)}MB).`);
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
-      const resource_type = resourceTypeFor(file); // always 'image' (images & pdfs)
+      const resource_type = resourceTypeFor(file); // 'image' for images, 'raw' for pdf
       const isPdf = file.type === 'application/pdf';
 
-      const res = await uploadBuffer(buffer, {
-        folder,
-        resource_type,
-        format: isPdf ? 'pdf' : undefined,
-      });
+      const res = await uploadBuffer(buffer, { folder, resource_type });
 
-      return res.secure_url;
+      // Store an inline-viewable URL
+      const url = viewUrlFor(res, { isPdf });
+
+      return url;
     };
 
     /* ── Uploads ── */
-    // 1) ID Document (image or pdf)
     if (isFile(idFile)) {
       try {
         const url = await handleUpload(idFile, `${token}/id`);
@@ -135,9 +143,7 @@ export async function POST(request) {
       }
     }
 
-    // 2) Selfie (image only)
     if (isFile(selfieFile)) {
-      // enforce image explicitly for selfie
       if (!String(selfieFile.type || '').startsWith('image/')) {
         return fail(400, { error: 'Selfie must be an image', step: 'selfie-validation' });
       }
@@ -149,7 +155,6 @@ export async function POST(request) {
       }
     }
 
-    // 3) Address Proof (image or pdf)
     if (isFile(addressProofFile)) {
       try {
         const url = await handleUpload(addressProofFile, `${token}/address`);
