@@ -5,7 +5,6 @@ import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 
-/* ───────────────── Cloudinary ───────────────── */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -13,36 +12,41 @@ cloudinary.config({
   secure: true,
 });
 
-/* ───────────────── Supabase ───────────────── */
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-/* ───────────────── Helpers ───────────────── */
-const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB safety cap
-
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const isFile = (x) => typeof x === 'object' && x && typeof x.arrayBuffer === 'function';
-
-const isAllowedType = (file) => {
-  const mime = file?.type || '';
-  return mime.startsWith('image/') || mime === 'application/pdf';
+const isAllowedType = (f) => {
+  const m = f?.type || '';
+  return m.startsWith('image/') || m === 'application/pdf';
 };
 
-// Upload PDFs as "image" so they render inline in the browser
-const resourceTypeFor = (file) => 'image';
+// Build a browser-viewable URL for storage:
+// - images: use secure_url as-is
+// - pdfs: SIGNED raw URL with inline disposition to avoid 401 + “download only”
+const buildViewUrl = ({ public_id, type, resource_type }, { isPdf }) => {
+  if (!isPdf) return cloudinary.url(public_id, { resource_type: 'image', type: type || 'upload', secure: true });
+  return cloudinary.url(public_id, {
+    resource_type: 'raw',
+    type: type || 'upload',
+    flags: 'attachment:false', // inline
+    secure: true,
+    sign_url: true,            // avoids 401 with strict settings
+  });
+};
 
-const uploadBuffer = (buffer, { folder, resource_type, public_id, format }) =>
+const uploadBuffer = (buffer, { folder, resource_type }) =>
   new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
         {
           folder,
-          resource_type,           // always 'image' here (images & pdfs)
-          access_mode: 'public',   // publicly viewable
+          resource_type,         // 'image' | 'raw' (use 'raw' for PDFs)
           type: 'upload',
-          public_id,               // optional: keep undefined to auto-generate
-          ...(format ? { format } : {}),
+          access_mode: 'public',
         },
         (err, res) => (err ? reject(err) : resolve(res))
       )
@@ -51,7 +55,6 @@ const uploadBuffer = (buffer, { folder, resource_type, public_id, format }) =>
 
 const fail = (status, payload) => NextResponse.json(payload, { status });
 
-/* ───────────────── Route ───────────────── */
 export async function POST(request) {
   try {
     const formData = await request.formData();
@@ -67,64 +70,51 @@ export async function POST(request) {
       return fail(400, { error: 'Token is required', step: 'validation' });
     }
 
-    // Validate token belongs to a link
     const { data: linkData, error: linkError } = await supabase
       .from('links')
       .select('id')
       .eq('token', token)
       .single();
-
     if (linkError || !linkData) {
       return fail(404, { error: 'Invalid token', step: 'token-validation', details: linkError?.message });
     }
 
-    // Prevent duplicate submissions
     const { data: existing } = await supabase
       .from('submissions')
       .select('id')
       .eq('token', token)
       .maybeSingle();
-
     if (existing) {
       return fail(400, { error: 'Documents already submitted for this link', step: 'duplicate-check' });
     }
 
-    // Prepare result container
     const uploadedData = {
       idType: null,
-      idPicture: null,                 // URL
-      selfie: null,                    // URL
+      idPicture: null,
+      selfie: null,
       addressProofType: null,
-      addressProofPicture: null,       // URL
+      addressProofPicture: null,
     };
 
-    // Small utility to handle a single upload
     const handleUpload = async (file, folder) => {
       if (!isFile(file)) return null;
-      if (!isAllowedType(file)) {
-        throw new Error(`Unsupported file type: ${file.type}. Only images and PDFs are allowed.`);
-      }
+      if (!isAllowedType(file)) throw new Error(`Unsupported file type: ${file.type}`);
       if (file.size > MAX_FILE_BYTES) {
-        throw new Error(
-          `File too large: ${(file.size / (1024 * 1024)).toFixed(1)}MB (max ${MAX_FILE_BYTES / (1024 * 1024)}MB).`
-        );
+        throw new Error(`File too large: ${(file.size / (1024 * 1024)).toFixed(1)}MB (max 25MB).`);
       }
 
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const resource_type = resourceTypeFor(file); // always 'image' (images & pdfs)
       const isPdf = file.type === 'application/pdf';
+      const resource_type = isPdf ? 'raw' : 'image';
+      const buffer = Buffer.from(await file.arrayBuffer());
 
-      const res = await uploadBuffer(buffer, {
-        folder,
-        resource_type,
-        format: isPdf ? 'pdf' : undefined,
-      });
+      const res = await uploadBuffer(buffer, { folder, resource_type });
+      // res contains: public_id, resource_type, type, secure_url, etc.
+      const url = buildViewUrl(res, { isPdf });
 
-      return res.secure_url;
+      return url;
     };
 
-    /* ── Uploads ── */
-    // 1) ID Document (image or pdf)
+    // ID (image or pdf)
     if (isFile(idFile)) {
       try {
         const url = await handleUpload(idFile, `${token}/id`);
@@ -135,21 +125,19 @@ export async function POST(request) {
       }
     }
 
-    // 2) Selfie (image only)
+    // Selfie (image only)
     if (isFile(selfieFile)) {
-      // enforce image explicitly for selfie
       if (!String(selfieFile.type || '').startsWith('image/')) {
         return fail(400, { error: 'Selfie must be an image', step: 'selfie-validation' });
       }
       try {
-        const url = await handleUpload(selfieFile, `${token}/selfie`);
-        uploadedData.selfie = url;
+        uploadedData.selfie = await handleUpload(selfieFile, `${token}/selfie`);
       } catch (err) {
         return fail(500, { error: `Selfie upload failed: ${err.message}`, step: 'cloudinary-selfie-upload' });
       }
     }
 
-    // 3) Address Proof (image or pdf)
+    // Address (image or pdf)
     if (isFile(addressProofFile)) {
       try {
         const url = await handleUpload(addressProofFile, `${token}/address`);
@@ -160,7 +148,6 @@ export async function POST(request) {
       }
     }
 
-    /* ── Persist submission ── */
     const insertData = {
       document_link_id: linkData.id,
       token,
@@ -178,7 +165,6 @@ export async function POST(request) {
       .insert(insertData)
       .select()
       .single();
-
     if (insertError) {
       return fail(500, { error: 'Failed to save submission', step: 'db-insert', details: insertError.message });
     }
